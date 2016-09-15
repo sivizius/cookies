@@ -1,0 +1,47 @@
+;( cookies-structure )
+;{
+;:  0x00                                .size                                   .length
+;:  0x02                                symlen                                  word                                    length of symbol
+;:  0x04                                uid                                     dword                                   unique id
+;:  0x08                                *previous                               -> *cookies                             previous cookies-object
+;:  0x10                                *table                                  -> *content                             content of    hashtable
+;:  0x18                                *buffer                                 -> *buffer                              buffer  with  hashtable
+;:  0x20                                *data                                   -> db[?]                                some data for the hash-function
+;:  0x28                                *symbol                                 -> *buffer                              current symbol
+;:  0x30                                state                                   qword                                   current state
+;:  0x38                                mask                                    qword                                   pos = ( *table + ( hash & mask ))
+;:  0x40                                @absorb()                               -> @function()                          hash  function
+;:  0x48                                @squeeze()                              -> @function()                          final function
+;:  0x4c                                entries                                 word                                    number of entries
+;}
+
+cookies.size                            =                                       ( 0x00 )
+cookies.symlen                          =                                       ( 0x02 )
+cookies.uid                             =                                       ( 0x04 )
+cookies.previous                        =                                       ( 0x08 )
+cookies.table                           =                                       ( 0x10 )
+cookies.buffer                          =                                       ( 0x18 )
+cookies.data                            =                                       ( 0x20 )
+cookies.symbol                          =                                       ( 0x28 )
+cookies.state                           =                                       ( 0x30 )
+cookies.mask                            =                                       ( 0x38 )
+cookies.absorb                          =                                       ( 0x40 )
+cookies.squeeze                         =                                       ( 0x48 )
+cookies.entries                         =                                       ( 0x4c )
+cookies.length                          =                                       ( 0x60 - 2 )
+
+absorb@__cookies__                      equ                                     qword [ __cookies__ + cookies.absorb    ]
+buffer@__cookies__                      equ                                     qword [ __cookies__ + cookies.buffer    ]
+data@__cookies__                        equ                                     qword [ __cookies__ + cookies.data      ]
+entries@__cookies__                     equ                                     word  [ __cookies__ + cookies.entries   ]
+length@__cookies__                      equ                                     (( cookies.length ))
+mask@__cookies__                        equ                                     qword [ __cookies__ + cookies.mask      ]
+previous@__cookies__                    equ                                     qword [ __cookies__ + cookies.previous  ]
+size@__cookies__                        equ                                     word  [ __cookies__ + cookies.size      ]
+squeeze@__cookies__                     equ                                     qword [ __cookies__ + cookies.squeeze   ]
+state@__cookies__                       equ                                     qword [ __cookies__ + cookies.state     ]
+symbol@__cookies__                      equ                                     qword [ __cookies__ + cookies.symbol    ]
+symlen@__cookies__                      equ                                     word  [ __cookies__ + cookies.symlen    ]
+table@__cookies__                       equ                                     qword [ __cookies__ + cookies.table     ]
+uid@__cookies__                         equ                                     dword [ __cookies__ + cookies.uid       ]
+

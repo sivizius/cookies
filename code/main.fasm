@@ -1,0 +1,806 @@
+init:
+;( I/O )
+;{
+;:  rax   lib0ret                       lb(size)                                mask
+;:  rdx   lib2arg                       @absorb()                               state-table.size
+;:  rsi   lib1arg                       @squeeze()                              null
+;:  rdi   lib0arg                       *data                                   *state-table
+;:  r13   __cookies__                   previous *cookies                       *cookies
+;}
+;{
+  push                                  lib2arg
+  push                                  lib1arg
+    push                                rax
+    push                                __cookies__
+    push                                lib0arg
+      remark ;onDebug
+      {
+        echo_put                        [ cookies ]
+        echo_put                        [ message ]
+      }
+      buffers_new                       length@__cookies__                      ;( -> cookies )
+      mov                               __cookies__,                            buffer@__buffers__
+    pop                                 rax
+    pop                                 rdi
+    pop                                 rcx
+    mov                                 previous@__cookies__,                   rdi
+  pop                                   rsi
+  pop                                   rdi
+  mov                                   absorb@__cookies__,                     rdi
+  mov                                   squeeze@__cookies__,                    rsi
+  mov                                   data@__cookies__,                       rax
+  mov                                   rdx,                                    ( item.length )
+  flags                                 cl
+  jb                                    failBoundaries
+  cmp                                   cl,                                     ( item.power )
+  ja                                    failBoundaries
+  shl                                   rdx,                                    cl
+  mov                                   rax,                                    rdx
+  buffers_new                           rdx                                     ;( -> cookies -> state-table )
+  mov                                   buffer@__cookies__,                     buffer@__buffers__
+  shr                                   rax,                                    ( 20 - item.power )
+  mov                                   table@__cookies__,                      rbx
+  dec                                   rax
+  clc
+  mov                                   mask@__cookies__,                       rax
+  ret
+;}
+hash:
+;( I/O )
+;{
+;:  rax                                 ignored                                 last_char
+;:  rbx                                 ignored                                 *last_char
+;:  rcx                                 ignored                                 null
+;:  rdx lib2arg                         ignored                                 last_char.size
+;:  rsi lib1arg                         ignored                                 ( *last_char + last_char.size )
+;:  rdi lib0arg                         *buffer                                 *data
+;:  r13   __cookies__                   *cookies                                *cookies
+;:  r15                                 ignored                                 *page
+;:  CF                                  ignored                                 set if failed
+;}
+;{
+  flags                                 buffer@__buffers__
+  jz                                    hash.zero
+  buffers_get
+  mov                                   symbol@__cookies__,                     buffer@__buffers__
+  jc                                    failArgument
+  mov                                   rdi,                                    data@__cookies__
+  mov                                   symlen@__cookies__,                     cx
+  flags                                 rcx
+  mov                                   rsi,                                    rbx
+  jz                                    .null
+  ;( while EoB = false )
+    .loop:
+  ;{
+    buffers_utf8                        rsi
+    sub                                 rcx,                                    rdx
+    call                                absorb@__cookies__
+    flags                               rcx
+    ja                                  .loop
+  ;}
+  .null:
+  call                                  squeeze@__cookies__
+  mov                                   state@__cookies__,                      lib0ret
+  ret
+  .zero:
+  call                                  squeeze@__cookies__
+  mov                                   state@__cookies__,                      lib0ret
+  mov                                   symbol@__cookies__,                     null
+  mov                                   symlen@__cookies__,                     null
+  ret
+;}
+new:
+;( I/O )
+;{
+;:  rax   lib0ret                       char                                    state
+;:  rbx                                 *char                                   *sbox
+;:  rcx                                 ignored                                 string.size
+;:  rdx   lib2arg                       char.size                               null
+;:  rsi   lib1arg                       ignored                                 ( *char + char.size )
+;:  rdi   lib0arg                       ignored                                 *data
+;:  r13   __cookies__                   *cookies                                *cookies
+;}
+;{
+  __save__                              __file__,                               __page__
+    buffers_new                         lib2arg,                                rbx,                                    lib2arg
+  __load__                              __file__,                               __page__
+  mov                                   symbol@__cookies__,                     buffer@__buffers__
+  mov                                   symlen@__cookies__,                     contentSize_w@__buffers__
+  mov                                   rdi,                                    data@__cookies__
+  jmp                                   absorb@__cookies__
+;}
+put:
+;( I/O )
+;{
+;:  rax   lib0ret                       char                                    state
+;:  rbx                                 *char                                   *sbox
+;:  rcx                                 ignored                                 string.size
+;:  rdx   lib2arg                       char.size                               null
+;:  rsi   lib1arg                       ignored                                 *char
+;:  rdi   lib0arg                       ignored                                 *data
+;:  r13   __cookies__                   *cookies                                *cookies
+;}
+;{
+  push                                  rax
+  __save__                              __file__,                               __page__
+    buffers_extend                      symbol@__cookies__,                     rdx,                                    rbx,                                    rdx
+    mov                                 symlen@__cookies__,                     contentSize_w@__buffers__
+    mov                                 symbol@__cookies__,                     buffer@__buffers__
+  __load__                              __file__,                               __page__
+  pop                                   rax
+  mov                                   symbol@__cookies__,                     buffer@__buffers__
+  mov                                   rdi,                                    data@__cookies__
+  jmp                                   absorb@__cookies__
+;}
+fin:
+;( I/O )
+;{
+;:  rax   lib0ret                       ignored                                 state
+;:  rbx                                 ignored                                 *sbox
+;:  rcx                                 ignored                                 unchanged
+;:  rdx   lib2arg                       ignored                                 state.size
+;:  rsi   lib1arg                       ignored                                 *state
+;:  rdi   lib0arg                       ignored                                 *data
+;:  r13   __cookies__                   *cookies                                *cookies
+;}
+;{
+  mov                                   rdi,                                    data@__cookies__
+  call                                  squeeze@__cookies__
+  mov                                   state@__cookies__,                      lib0ret
+  ret
+;}
+get:
+;( I/O )
+;{
+;:  rax   lib0ret                       ignored                                 state
+;:  rbx                                 ignored                                 *symbol + 2
+;:  rcx                                 ignored                                 symbol_size
+;:  rdx   lib2arg                       ignored                                 *symbol
+;:  rsi   lib1arg                       ignored                                 *state
+;:  rdi   lib0arg                       ignored                           dword last uid
+;:  r13   __cookies__                   *cookies                                *cookies
+;}
+;{
+  mov                                   rax,                                    state@__cookies__
+  mov                                   rdx,                                    symbol@__cookies__
+  movzx                                 rcx,                                    symlen@__cookies__
+  lea                                   rbx,                                    [ rdx + 2 ]
+  lea                                   rsi,                                    state@__cookies__
+  mov                                   edi,                                    uid@__cookies__
+  ret
+;}
+insert:
+;( I/O )
+;{
+;:  rax   lib0ret                       ignored                             eax uid
+;:  rbx                                 ignored                                 unknown
+;:  rcx                                 ignored                                 unknown
+;:  rdx   lib2arg                       ignored                                 unknown
+;:  rsi   lib1arg                       ignored                                 unknown
+;:  rdi   lib0arg                       ignored                                 unknown
+;:  r13   __cookies__                   *cookies                                *cookies
+;}
+;{
+  mov                                   rax,                                    state@__cookies__
+  push                                  rbx
+  push                                  rcx
+  mov                                   rbx,                                    rax
+  mov                                   rcx,                                    mask@__cookies__
+  push                                  rsi
+  and                                   rax,                                    rcx
+  push                                  rdx
+  mov                                   rsi,                                    table@__cookies__
+  shl                                   rax,                                    ( 20 - item.power )
+  push                                  rdi
+  add                                   rsi,                                    rax
+  mov                                   rdi,                                    symbol@__cookies__
+  mov                                   rax,                                    qword [ rsi + item.tree.state ]
+  movzx                                 rdx,                                    symlen@__cookies__
+  add                                   rdi,                                    2
+
+  remark ;onDebug
+  {
+    push                                rax
+    push                                rcx
+    push                                rdx
+    push                                rdi
+    push                                rsi
+      echo_put                          [ debugStart ]
+      echo_hexValue                     ( rsp ),                                __qword__
+    pop                                 rsi
+    pop                                 rdi
+    pop                                 rdx
+    pop                                 rcx
+    pop                                 rax
+  }
+  ;( if !state@tree )
+    ;( registers )
+    ;{
+    ;:  rax                             state@tree
+    ;:  rbx                             state@cookies
+    ;:  rcx                             mask
+    ;:  rdx                             string.size
+    ;:  rsi                             *tree
+    ;:  rdi                             *string
+    ;}
+    flags                               rax
+    jnz                                 .non_zero
+  ;{
+    ;( if state@cookies )
+      mov                               rax,                                    qword [ rsi + item.tree.equal ]
+      flags                             rbx
+      jnz                               .zero.check
+      .create:
+    ;{
+      mov                               word  [ rsi + item.list.symlen ],       dx
+      mov                               eax,                                    uid@__cookies__
+      mov                               qword [ rsi + item.list.symbol ],       rdi
+      inc                               eax
+      mov                               qword [ rsi + item.list.state ],        rbx
+      not                               rbx
+      mov                               dword [ rsi + item.list.uid ],          eax
+      mov                               rdi,                                    table@__cookies__
+      mov                               word  [ rsi + item.list.pseudo ],       bx
+      mov                               uid@__cookies__,                        eax
+      remark ;onDebug
+      {
+        push                            rsi
+          echo_put                      [ debugNewItem ]
+          echo_put                      [ debugAt ]
+          echo_hexValue                 ( rsp ),                                __qword__
+        pop                             __tmp2__
+        echo_put                        [ debugUID ]
+        echo_hexValue                   ( __tmp2__ + item.list.uid ),           __dword__
+        echo_put                        [ debugState ]
+        echo_hexValue                   ( __tmp2__ + item.list.state ),         __qword__
+        echo_put                        [ debugSymbolAt ]
+        echo_hexValue                   ( __tmp2__ + item.list.symbol ),        __qword__
+        echo_put                        [ debugSymbolStr ]
+        mov                             sys1arg,                                qword [ __tmp2__ + item.list.symbol ]
+        movzx                           sys2arg,                                word  [ __tmp2__ + item.list.symlen ]
+        echo_put
+        echo_put                        [ debugSymbolEnd ]
+        mov                             eax,                                    uid@__cookies__
+      }
+      ;jmp                             .return
+      add                               entries@__cookies__,                    1
+      .return:
+      ;{
+        clc
+        .return.here:
+        pop                             rdi
+        pop                             rdx
+        pop                             rsi
+        pop                             rcx
+        pop                             rbx
+        ret
+      ;}
+    ;}
+    ;( else )
+      .zero.check:
+    ;{
+      flags                             rax
+      jnz                               .tree
+      jmp                               .create
+    ;}
+  ;}
+  ;( else )
+    ;( registers )
+    ;{
+    ;:  rax                             state@tree
+    ;:  rbx                             state@cookies
+    ;:  rcx                             mask
+    ;:  rdx                             string.size
+    ;:  rsi                             *tree
+    ;:  rdi                             *string
+    ;}
+    .non_zero:
+  ;{
+    ;( if !(( item.tree.state xor <state> ) and <mask> ))
+      xor                               rax,                                    rbx
+      and                               rax,                                    rcx
+      jnz                               .list
+      .tree:
+    ;{
+        mov                             rax,                                    qword [ rsi + item.tree.state ]
+        .tree.repeat:
+        ;{
+          cmp                           rbx,                                    rax
+          je                            .list.next
+          cmova                         rcx,                                    qword [ rsi + item.tree.above ]
+          cmovb                         rcx,                                    qword [ rsi + item.tree.below ]
+          flags                         rcx
+          jz                            .tree.insert
+          remark ;onDebug
+          {
+            push                          rdx
+            push                          rdi
+            push                          rcx
+              echo_put                    [ debugNext ]
+              echo_hexValue               ( rsp ),                              __qword__
+            pop                           rsi
+            pop                           rdi
+            pop                           rdx
+            mov                           rax,                                  qword [ rsi + item.tree.state ]
+          }
+      ;    onAlone
+      ;    {
+            mov                         rsi,                                    rcx
+            mov                         rax,                                    qword [ rcx + item.tree.state ]
+      ;    }
+          jmp                           .tree.repeat
+        ;}
+        .tree.insert:
+        ;{
+          remark ;onDebug
+          {
+            push                        rsi
+          }
+          push                          rdx ;RDX symlen
+            push                        rbx ;RBX state
+              null                      rdx
+              cmp                       rbx,                                    rax
+              mov                       rcx,                                    ( 2 * __qword__ )
+              lea                       rsi,                                    [ rsi + item.tree.below ]
+              cmova                     rdx,                                    rcx
+              add                       rsi,                                    rdx
+              mov                       rcx,                                    ( item.list.length + item.length )
+              push                      rsi ;RSI *tree.leap
+                push                    rdi ;RDI *symbol
+                __save__                __file__,                               __page__
+                  null                  rsi
+                  null                  rdx
+                  buffers_new
+                  mov                   qword [ rdi + item.list.length + 2 \
+                                                    + item.tree.equal ],        rdi
+                __load__                __file__,                               __page__
+                pop                     rcx ;RCX *symbol
+                mov                     qword [ rdi + item.list.next ],         rdx                                     ;= 0
+              pop                       rsi ;RSI *tree.leap
+              mov                       qword [ rdi + item.list.symbol ],       rcx
+            pop                         rbx ;RBX state
+          pop                           rdx ;RDX symlen
+          mov                           qword [ rdi + item.list.length + 2 \
+                                                    + item.tree.state ],         rbx
+          add                           uid@__cookies__,                        1
+          lea                           rcx,                                    [ rdi + item.list.length + 2 ]
+          mov                           eax,                                    uid@__cookies__
+          mov                           word  [ rdi + item.list.symlen ],       dx
+          mov                           qword [ rsi ],                          rcx
+          mov                           dword [ rdi + item.list.uid ],          eax
+        ;}
+        remark ;onDebug
+        {
+            push                        rcx
+              echo_put                  [ debugNewLeap ]
+              echo_put                  [ debugAt ]
+              echo_hexValue             ( rsp ),                                __qword__
+            pop                         rbx
+            echo_put                    [ debugState ]
+            echo_hexValue               ( rbx + item.tree.state ),              __qword__
+            echo_put                    [ debugBelow ]
+            echo_hexValue               ( rbx + item.tree.below ),              __qword__
+            echo_put                    [ debugEqual ]
+            echo_hexValue               ( rbx + item.tree.equal ),              __qword__
+            echo_put                    [ debugAbove ]
+            echo_hexValue               ( rbx + item.tree.above ),              __qword__
+            echo_put                    [ newline ]
+            echo_put                    [ debugAt ]
+            echo_hexValue               ( rbx + item.tree.equal ),              __qword__
+            mov                         rbx,                                    qword [ rbx + item.tree.equal ]
+            echo_put                    [ debugUID ]
+            echo_hexValue               ( rbx + item.list.uid ),                __dword__
+            echo_put                    [ debugSymbolAt ]
+            echo_hexValue               ( rbx + item.list.symbol ),             __qword__
+            echo_put                    [ debugSymbolStr ]
+            mov                         sys1arg,                                qword [ rbx + item.list.symbol ]
+            movzx                       sys2arg,                                word  [ rbx + item.list.symlen ]
+            echo_put
+            echo_put                    [ debugSymbolEnd ]
+            echo_put                    [ debugAt ]
+            echo_hexValue               ( rsp ),                                __qword__
+          pop                           rbx
+          echo_put                      [ debugState ]
+          echo_hexValue                 ( rbx + item.tree.state ),              __qword__
+          echo_put                      [ debugBelow ]
+          echo_hexValue                 ( rbx + item.tree.below ),              __qword__
+          echo_put                      [ debugEqual ]
+          echo_hexValue                 ( rbx + item.tree.equal ),              __qword__
+          echo_put                      [ debugAbove ]
+          echo_hexValue                 ( rbx + item.tree.above ),              __qword__
+          echo_put                      [ newline ]
+          mov                           rbx,                                    qword [ rbx + item.tree.equal ]
+          push                          rbx
+            echo_put                    [ debugAt ]
+            echo_hexValue               ( rsp ),                                __qword__
+          pop                           rbx
+          echo_put                      [ debugUID ]
+          echo_hexValue                 ( rbx + item.list.uid ),                __dword__
+          echo_put                      [ debugSymbolAt ]
+          echo_hexValue                 ( rbx + item.list.symbol ),             __qword__
+          echo_put                      [ debugSymbolStr ]
+          mov                           sys1arg,                                qword [ rbx + item.list.symbol ]
+          movzx                         sys2arg,                                word  [ rbx + item.list.symlen ]
+          echo_put
+          echo_put                      [ debugSymbolEnd ]
+          mov                           eax,                                    uid@__cookies__
+        }
+        add                             entries@__cookies__,                    1
+        jmp                             .return
+      ;}
+      ;( else )
+    ;( registers )
+    ;{
+    ;:  rax                             state@list
+    ;:  rbx                             state@cookies
+    ;:  rcx                             mask
+    ;:  rdx                             string.size
+    ;:  rsi                             *list
+    ;:  rdi                             *string
+    ;}
+        .list:
+      ;{
+        mov                             rax,                                    qword [ rsi + item.list.state ]
+        cmp                             rbx,                                    rax
+        je                              .list.next
+        .list.tree:
+        ;{
+          push                          rdx
+          push                          __page__
+            push                        rsi
+              push                      rbx
+                mov                     length@__buffers__,                     ( item.list.length + item.length + item.list.length + 2 )
+                lea                     input@__buffers__,                      [ rsi + 2 ]
+                mov                     inputSize@__buffers__,                  ( item.list.length + __qword__ )
+                buffers_new
+                mov                     qword [ buffer@__buffers__ + item.list.length \
+                                                + 2 + item.tree.equal ],        buffer@__buffers__
+              pop                       rbx
+            pop                         rsi
+            add                         rdi,                                    ( item.list.length + 2 )
+            mov                         rax,                                    qword [ rsi + item.list.state ]
+            null                        rcx
+            null                        rdx
+            lea                         r8,                                     [ rdi + item.length ]
+            cmp                         rax,                                    rbx
+            cmova                       rdx,                                    rdi
+            mov                         qword [ rsi + item.tree.equal ],        r8
+            mov                         rax,                                    symbol@__cookies__
+            cmovb                       rcx,                                    rdi
+            add                         rax,                                    2
+            mov                         qword [ rsi + item.tree.above ],        rdx
+            add                         uid@__cookies__,                        1
+            mov                         qword [ rsi + item.tree.below ],        rcx
+            mov                         qword [ rdi + item.length \
+                                                    + item.list.symbol ],       rax
+            mov                         qword [ rsi + item.tree.state ],        rbx
+            mov                         eax,                                    uid@__cookies__
+          pop                           __page__
+          mov                           dword [ rdi + item.length \
+                                                    + item.list.uid ],          eax
+          pop                           rdx
+          mov                           word  [ rdi + item.length \
+                                                    + item.list.symlen ],       dx
+          remark ;onDebug
+          {
+            push                        rsi
+              push                      rdi
+                echo_put                [ debugNewTree ]
+                echo_put                [ debugAt ]
+                echo_hexValue           ( rsp ),                                __qword__
+              pop                       rbx
+              echo_put                  [ debugState ]
+              echo_hexValue             ( rbx + item.tree.state ),              __qword__
+              echo_put                  [ debugBelow ]
+              echo_hexValue             ( rbx + item.tree.below ),              __qword__
+              echo_put                  [ debugEqual ]
+              echo_hexValue             ( rbx + item.tree.equal ),              __qword__
+              echo_put                  [ debugAbove ]
+              echo_hexValue             ( rbx + item.tree.above ),              __qword__
+              echo_put                  [ newline ]
+              echo_put                  [ debugAt ]
+              echo_hexValue             ( rsp ),                                __qword__
+              lea                       rax,                                    [ rbx + item.tree.equal ]
+            pop                         rbx
+            push                        rax
+              echo_put                  [ debugState ]
+              echo_hexValue             ( rbx + item.tree.state ),              __qword__
+              echo_put                  [ debugBelow ]
+              echo_hexValue             ( rbx + item.tree.below ),              __qword__
+              echo_put                  [ debugEqual ]
+              echo_hexValue             ( rbx + item.tree.equal ),              __qword__
+              echo_put                  [ debugAbove ]
+              echo_hexValue             ( rbx + item.tree.above ),              __qword__
+              echo_put                  [ newline ]
+              echo_put                  [ debugAt ]
+              echo_hexValue             ( rbx + item.tree.equal ),              __qword__
+              mov                       rbx,                                    qword [ rbx + item.tree.equal ]
+              echo_put                  [ debugUID ]
+              echo_hexValue             ( rbx + item.list.uid ),                __dword__
+              echo_put                  [ debugSymbolAt ]
+              echo_hexValue             ( rbx + item.list.symbol ),             __qword__
+              echo_put                  [ debugSymbolStr ]
+              mov                       sys1arg,                                qword [ rbx + item.list.symbol ]
+              movzx                     sys2arg,                                word  [ rbx + item.list.symlen ]
+              echo_put
+              echo_put                  [ debugSymbolEnd ]
+            pop                         rbx
+            echo_put                    [ debugAt ]
+            echo_hexValue               ( rbx ),                                __qword__
+            mov                         rbx,                                    qword [ rbx ]
+            echo_put                    [ debugUID ]
+            echo_hexValue               ( rbx + item.list.uid ),                __dword__
+            echo_put                    [ debugSymbolAt ]
+            echo_hexValue               ( rbx + item.list.symbol ),             __qword__
+            echo_put                    [ debugSymbolStr ]
+            mov                         sys1arg,                                qword [ rbx + item.list.symbol ]
+            movzx                       sys2arg,                                word  [ rbx + item.list.symlen ]
+            echo_put
+            echo_put                    [ debugSymbolEnd ]
+            mov                         eax,                                    uid@__cookies__
+          }
+          add                           entries@__cookies__,                    1
+          jmp                           .return
+        ;}
+        .list.next:
+        ;( list probably has one element and symbol is already a member )
+        ;{
+          mov                           r8,                                     rsi
+          mov                           r9,                                     rdi
+          ;( if symbol.size == size )
+            .list.next.loop:
+            cmp                         word  [ r8 + item.list.symlen ],        dx
+            jne                         .list.next.else                         ;usualy not taken
+          ;{
+            .list.next.symbol:
+              mov                       rsi,                                    qword [ r8 + item.list.symbol ]
+              mov                       rdi,                                    r9
+              mov                       cx,                                     dx
+            .list.next.symbol.loop:
+              cmpsb
+              jne                       .list.next.else                         ;usualy not taken
+              dec                       cx
+              jnz                       .list.next.symbol.loop                  ;usualy taken
+              mov                       eax,                                    dword [ r8 + item.list.uid ]
+              remark ;onDebug
+              {
+                push                    rax
+                echo_put                [ debugOldItem ]
+                echo_hexValue           ( rsp ),                                __dword__
+                pop                     rax
+              }
+              stc
+              jmp                       .return.here
+            .list.next.final:
+              push                      __page__
+                push                    rdx
+                  push                  r9
+                    push                r8
+                      buffers_new       ( item.list.length )
+                      mov               r8,                                     rdi
+                      add               uid@__cookies__,                        1
+                      mov               qword [ r8 + item.list.next ],          0
+                      remark ;onDebug
+                      {
+                        echo_put        [ debugAddItem ]
+                        echo_put        [ debugUID ]
+                        echo_hexValue   ( __cookies__ + cookies.uid ),          __dword__
+                        echo_put        [ debugState ]
+                        echo_hexValue   ( __cookies__ + cookies.state ),        __qword__
+                        echo_put        [ debugSymbolAt ]
+                        echo_hexValue   ( __cookies__ + cookies.symbol ),       __qword__
+                        echo_put        [ debugSymbolStr ]
+                        mov             sys1arg,                                symbol@__cookies__
+                        movzx           sys2arg,                                symlen@__cookies__
+                        add             sys1arg,                                2
+                        echo_put
+                      }
+                      mov               eax,                                    uid@__cookies__
+                    mov                 dword [ r8 + item.list.uid ],           eax
+                  pop                   rsi
+
+                  mov                   qword [ rdx + item.list.next ],         r8
+
+                pop                     rbx
+                mov                     qword [ r8 + item.list.symbol ],        rsi
+                mov                     word  [ r8 + item.list.symlen ],        bx
+              pop                       __page__
+              add                       entries@__cookies__,                    1
+              jmp                       .return
+          ;}
+          ;( else )
+            .list.next.else:
+          ;{
+            mov                         rax,                                    qword [ r8 + item.list.next ]
+            flags                       rax
+            jz                          .list.next.final                        ;usualy taken
+            mov                         r8,                                     rax
+            jmp                         .list.next.loop
+          ;}
+      ;}
+    ;}
+;}
+onDebug
+{
+  debugList:
+  ;{
+    mov                                 __tmp2__,                               qword [ __tmp2__ + item.list.next ]     ;= item.tree.equal
+    flags                               __tmp2__
+    jnz                                 debugList.put                           ;not the usual case
+    ret
+    .put:
+    ;{
+      echo_put                          [ cookies ]
+      echo_put                          [ debugItem0 ]
+      echo_hexReg                       __tmp4__
+      echo_put                          [ debugItem1 ]
+      echo_hexValue                     ( __tmp2__ + item.list.uid ),           __dword__
+      echo_put                          [ debugItem2 ]
+      echo_put                          [ __tmp2__ + item.list.symbol ]
+      echo_put                          [ debugItem3 ]
+      jmp                               debugList
+    ;}
+  ;}
+  debugTree:
+  ;{
+    push                                null
+    .goDown:
+    ;{
+      mov                               rax,                                    qword [ __tmp2__ + item.tree.below ]
+      push                              __tmp2__
+      flags                             rax
+      jz                                .goBack
+      mov                               __tmp2__,                               rax
+      echo_put                          [ cookies ]
+      echo_put                          [ debugTreeBelow ]
+      jmp                               .goDown
+    ;}
+    .return.pop:
+    ;{
+      add                               rsp,                                    __qword__
+    ;}
+    .return:
+    ;{
+      echo_put                          [ cookies ]
+      echo_put                          [ debugTreeFinal ]
+      ret
+    ;}
+    .goBack.peek:
+    ;{
+      echo_put                          [ cookies ]
+      echo_put                          [ debugTreeReturn ]
+      mov                               __tmp2__,                               qword [ rsp ]
+      flags                             __tmp2__
+      jz                                .return.pop
+    ;}
+    .goBack:
+    ;{
+      echo_put                          [ cookies ]
+      echo_put                          [ debugTreeEqual ]
+      mov                               __tmp4__,                               qword [ __tmp2__ + item.tree.state ]
+      call                              debugList
+      pop                               __tmp2__
+      flags                             __tmp2__
+      jz                                .return
+      mov                               __tmp2__,                               qword [ __tmp2__ + item.tree.above ]
+      flags                             __tmp2__
+      jz                                .goBack.peek
+      echo_put                          [ cookies ]
+      echo_put                          [ debugTreeAbove ]
+      jmp                               .goDown
+    ;}
+  ;}
+  debug:
+  ;{
+    echo_put                            [ cookies         ]
+    echo_put                            [ debugCookies    ]
+    echo_hexRegister                    __cookies__
+    echo_put                            [ newline_cookies ]
+    echo_put                            [ debugTable      ]
+    echo_hexValue                       ( __cookies__ + cookies.table ),        __qword__
+    echo_put                            [ newline_cookies ]
+    echo_put                            [ debugBuffer     ]
+    echo_hexValue                       ( __cookies__ + cookies.buffer ),       __qword__
+    echo_put                            [ newline_cookies ]
+    echo_put                            [ debugMask       ]
+    echo_hexValue                       ( __cookies__ + cookies.mask ),         __qword__
+    echo_put                            [ newline_cookies ]
+    echo_put                            [ debugAbsorb   ]
+    echo_hexValue                       ( __cookies__ + cookies.absorb ),       __qword__
+    echo_put                            [ newline_cookies ]
+    echo_put                            [ debugSqueeze   ]
+    echo_hexValue                       ( __cookies__ + cookies.squeeze ),      __qword__
+    echo_put                            [ newline_cookies ]
+    echo_put                            [ debugEntries    ]
+    echo_hexValue                       ( __cookies__ + cookies.entries ),      __word__
+    echo_put                            [ newline ]
+
+    ;( debug item #0 in state-table, because state could be 0x0000000000000000 and type could be <3Btree> )
+    ;{
+      push                              __tmp4__
+      mov                               rdx,                                    mask@__cookies__
+      null                              rcx
+      mov                               __tmp2__,                               table@__cookies__
+      mov                               ax,                                     word  [ __tmp2__ + item.list.pseudo ]
+      inc                               rdx
+      flags                             ax
+      jnz                               debugItems.found
+      call                              debugTree
+      mov                               rdx,                                    mask@__cookies__
+      null                              rcx
+      mov                               __tmp2__,                               table@__cookies__
+
+    ;( debug items in state-table )
+      debugItems:
+    ;{
+      .loop:
+      ;{
+        mov                             ax,                                     word  [ __tmp2__ + item.list.pseudo ]
+        inc                             rcx
+        flags                           ax
+        jnz                             .found
+        dec                             rdx
+        jz                              .next
+        add                             __tmp2__,                               ( item.length )
+        jmp                             .loop
+      ;}
+      .next:
+      pop                               __tmp4__
+      ret
+      .found:
+      ;{
+        push                            rcx
+        push                            rdx
+        push                            __tmp2__
+        and                             rax,                                    mask@__cookies__
+        cmp                             ax,                                     cx
+        je                              .found.3Btree
+        mov                             __tmp4__,                               qword [ __tmp2__ + item.list.state ]
+        call                            debugList.put
+        .found.return:
+        ;{
+          pop                           __tmp2__
+          pop                           rdx
+          pop                           rcx
+          dec                           rdx
+          jz                            .next
+          add                           __tmp2__,                               ( item.length )
+          jmp                           .loop
+        ;}
+      ;}
+      .found.3Btree:
+      ;{
+        call                            debugTree
+        jmp                             .found.return
+      ;}
+    ;}
+  ;}
+  failBoundaries:
+  ;{
+    echo_put                            [ cookies ]
+    echo_put                            [ msgFailBoundaries ]
+    stc
+    ret
+  ;}
+  failArgument:
+  ;{
+    echo_put                            [ cookies ]
+    echo_put                            [ msgFailArgument ]
+    stc
+    ret
+  ;}
+}
+onAlone
+{
+  debug:
+  ;{
+    stc
+    ret
+  ;}
+  failBoundaries:
+  failArgument:
+  ;{
+    stc
+    ret
+  ;}
+}

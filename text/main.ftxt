@@ -1,0 +1,46 @@
+onDebug
+{
+  symbol  cookies                       ->                                      '[cookies] '
+  symbol  newline_cookies               ->                                      10, '[cookies] '
+  symbol  newline                       ->                                      10
+  symbol  message                       ->                                      'They taste so go0oOd!', 10
+  symbol  msgFailBoundaries             ->                                      'fail: power must be in 1 and 16!', 10
+  symbol  msgFailArgument               ->                                      'fail: invalid argument!', 10
+  symbol  debugCookies                  ->                                      '__cookies__  *0x'
+  symbol  debugTable                    ->                                      '*table       *0x'
+  symbol  debugBuffer                   ->                                      '*buffer      *0x'
+  symbol  debugMask                     ->                                      'mask         &0x'
+  symbol  debugAbsorb                   ->                                      '@absorb()    @0x'
+  symbol  debugSqueeze                  ->                                      '@squeeze()   @0x'
+  symbol  debugEntries                  ->                                      'entries      #0x'
+
+  symbol  debugTreeBelow                ->                                      'go below.', 10
+  symbol  debugTreeAbove                ->                                      'go above.', 10
+  symbol  debugTreeReturn               ->                                      'return.', 10
+  symbol  debugTreeEqual                ->                                      'put list.', 10
+  symbol  debugTreeFinal                ->                                      'end of tree.', 10
+  symbol  debugItem0                    ->                                      '<0x'
+  symbol  debugItem1                    ->                                      '>( uid = #0x'
+  symbol  debugItem2                    ->                                      ' ): »'
+  symbol  debugItem3                    ->                                      '«.', 10
+  symbol  debugThat                     ->                                      10, '[ps][ln][  uid ][    string    ][     next     ]', \
+                                                                                    '[     hash     ][     above    ][     equal    ][     below    ]', \
+                                                                                    '[ps][ln][  uid ][    string    ][     next     ]', 10
+  symbol  debugThis                     ->                                      10, '[     hash     ][     above    ][     equal    ][     below    ]', 10
+  symbol  debugAt                       ->                                      '  @*0x'
+  symbol  debugUID                      ->                                      ', uid = #0x'
+  symbol  debugState                    ->                                      ', state = 0x'
+  symbol  debugBelow                    ->                                      ', below = *0x'
+  symbol  debugEqual                    ->                                      ', equal = *0x'
+  symbol  debugAbove                    ->                                      ', above = *0x'
+  symbol  debugSymbolAt                 ->                                      ', *symbol = *0x'
+  symbol  debugSymbolStr                ->                                      ', $symbol = »'
+  symbol  debugSymbolEnd                ->                                      '«', 10
+  symbol  debugNewItem                  ->                                      ' -> ', 27, '[1;31mnew item', 27, '[0m:', 10
+  symbol  debugAddItem                  ->                                      ' -> ', 27, '[1;32madd item', 27, '[0m:', 10
+  symbol  debugOldItem                  ->                                      ' -> ', 27, '[1;33mold item', 27, '[0m:', 10
+  symbol  debugNewTree                  ->                                      ' -> ', 27, '[1;34mnew tree', 27, '[0m:', 10
+  symbol  debugNewLeap                  ->                                      ' -> ', 27, '[1;35mnew leap', 27, '[0m:', 10
+  symbol  debugStart                    ->                                      '-> *0x'
+  symbol  debugNext                     ->                                      ' -> *0x'
+}

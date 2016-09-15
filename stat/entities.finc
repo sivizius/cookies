@@ -1,0 +1,46 @@
+;( item-structure )
+;{
+;:  union
+;:  {
+;:    struc                             list
+;:    {
+;:      0x00                            pseudo-state                            word                                    ;= !( state & 0xffff )
+;:      0x02                            symbol-size                             word
+;:      0x04                            unique id                               dword
+;:      0x08                            *symbol                                 -> string
+;:      0x10                            *next                                   -> list
+;:      0x18                            state                                    qword
+;:    }
+;:    struc                             tree
+;:    {
+;:      0x00                            state                                    qword
+;:      0x08                            *below                                  -> b-tree
+;:      0x10                            *equal                                  -> list
+;:      0x18                            *above                                  -> b-tree
+;:    }
+;:  }
+;}
+;( list-stucture )
+;{
+;:  0x00                                length                                  word                                    ;= ( 2 + 4 + 8 + 8 )
+;:  0x02                                symbol-size                             word                                    ;= *symbol.len
+;:  0x04                                unique id                               dword
+;:  0x08                                *symbol                                 -> string
+;:  0x10                                *next                                   -> list
+;}
+
+item.list.pseudo                        =                                       ( 0x00 )
+item.list.symlen                        =                                       ( 0x02 )
+item.list.uid                           =                                       ( 0x04 )
+item.list.symbol                        =                                       ( 0x08 )
+item.list.next                          =                                       ( 0x10 )
+item.list.state                         =                                       ( 0x18 )
+
+item.tree.state                         =                                       ( 0x00 )
+item.tree.below                         =                                       ( 0x08 )
+item.tree.equal                         =                                       ( 0x10 )
+item.tree.above                         =                                       ( 0x18 )
+
+item.length                             =                                       ( 0x20 )
+item.list.length                        =                                       ( 2 + 4 + 8 + 8 )
+item.power                              =                                       (   15 )                                ;= lb( 1MB / length )

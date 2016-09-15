@@ -1,0 +1,73 @@
+__debug__                               fix                                     true
+;__debug__                               fix                                     false
+__tmp2__                                fix                                     r12
+
+__cookies__                             fix                                     r13
+__tmp3__                                fix                                     r13
+
+__yentry__                              fix                                     r14
+__elder__                               fix                                     r14
+__tmp4__                                fix                                     r14
+
+__page__                                fix                                     r15
+__file__                                fix                                     r15
+__tmp5__                                fix                                     r15
+
+;( import )
+;{
+  include                               'libs/main.fasm'
+  xstat                                 'main'
+  xstat                                 'on'
+  xstat                                 'yapter'
+  stat                                  'cookies'
+  stat                                  'entities'
+  yalib                                 'buffers'
+  onDebug
+  {
+    yalib                               'echo'
+  }
+;}
+
+sbaExec64                               ;'sbaHeader.txt'
+sbaBuffers
+{
+  text                                  'main'
+}
+sbaCode
+{
+  code                                  'main'
+}
+sbaModule                               'buffers'
+{
+;  symbol  buffers.clone                   ->                                      'clone'
+;  symbol  buffers.debug                   ->                                      'debug'
+;  symbol  buffers.delete                  ->                                      'delete'
+;  symbol  buffers.echo                    ->                                      'echo'
+;  symbol  buffers.echo0                   ->                                      'echo0'
+  symbol  buffers.extend                  ->                                      'extend'
+  symbol  buffers.get                     ->                                      'get'
+  symbol  buffers.new                     ->                                      'new'
+;  symbol  buffers.putByte                 ->                                      'putByte'
+;  symbol  buffers.putDWord                ->                                      'putDWord'
+;  symbol  buffers.putQWord                ->                                      'putQWord'
+;  symbol  buffers.putWord                 ->                                      'putWord'
+;  symbol  buffers.revive                  ->                                      'revive'
+;  symbol  buffers.store                   ->                                      'store'
+  symbol  buffers.utf8                    ->                                      'utf8'
+;  symbol  buffers.wastepicker             ->                                      'wastepicker'
+}
+onDebug
+{
+  sbaLibrary                            'echo'
+}
+sbaInterface
+{
+  assign  debug                         ->                                      'debug'
+  assign  fin                           ->                                      'fin'
+  assign  get                           ->                                      'get'
+  assign  hash                          ->                                      'hash'
+  assign  init                          ->                                      'init'
+  assign  insert                        ->                                      'insert'
+  assign  new                           ->                                      'new'
+  assign  put                           ->                                      'put'
+}
